@@ -20,6 +20,7 @@ Directory.CreateDirectory(testDownloads);
 const string testPackage = "edge-vpn-client-linux-x64-0.0.1.zip";
 using (var zip = System.IO.Compression.ZipFile.Open(Path.Combine(testDownloads, testPackage), System.IO.Compression.ZipArchiveMode.Create))
 using (var writer = new StreamWriter(zip.CreateEntry("test.txt").Open())) writer.Write("isolated integration fixture");
+File.Copy(Path.Combine(testDownloads, testPackage), Path.Combine(testDownloads, "edge-vpn-client-linux-x64-0.0.2.zip"));
 var children = new List<Process>();
 var admin = Secrets.Token(); var punch = Secrets.Token(); var relay = Secrets.Token();
 int webPort = FreePort(), relayPort = FreePort(), vpnPort = FreePort(), punchPort = FreePort();
@@ -52,6 +53,8 @@ try
     await Until(async () => { try { return (await http.GetAsync("/health", ct)).IsSuccessStatusCode; } catch { return false; } });
     using var nodeHttp = new HttpClient();
     await Until(async () => { try { return (await nodeHttp.GetAsync($"http://127.0.0.1:{relayPort}/health", ct)).IsSuccessStatusCode; } catch { return false; } });
+    var downloadCatalog = await Call("/api/downloads", null, null, "GET");
+    Check(downloadCatalog.GetArrayLength() == 1 && downloadCatalog[0].GetProperty("version").GetString() == "0.0.2", "catalog lists latest package while historical URLs remain downloadable");
     await Expect("/admin/traffic", null, null, 401, "GET");
     await http.GetStringAsync("/", ct);
     await http.GetStringAsync("/downloads?ticket=must-not-be-stored", ct);

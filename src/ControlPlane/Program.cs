@@ -84,7 +84,7 @@ if (!string.IsNullOrEmpty(bootstrapEmail) && !string.IsNullOrEmpty(bootstrapPass
 
 app.UseForwardedHeaders();
 var traffic = app.Services.GetRequiredService<TrafficStatistics>();
-var downloadPaths = catalog.Items.Select(i => i.Url).ToHashSet(StringComparer.Ordinal);
+var downloadPaths = catalog.AllItems.Select(i => i.Url).ToHashSet(StringComparer.Ordinal);
 app.Use(async (ctx, next) =>
 {
     var path = ctx.Request.Path.Value ?? "/";
@@ -400,7 +400,7 @@ app.MapGet("/api/device/profile", (HttpContext ctx) => store.Write(db =>
 app.MapGet("/api/downloads", () => catalog.Items);
 app.MapGet("/downloads/{file}", (HttpContext ctx, string file) =>
 {
-    var item = catalog.Items.FirstOrDefault(i => i.Name == file);
+    var item = catalog.AllItems.FirstOrDefault(i => i.Name == file);
     if (item is null) return Results.NotFound();
     ctx.Response.Headers.CacheControl = "public, max-age=3600";
     return Results.File(catalog.PathFor(item), "application/zip", file, enableRangeProcessing: true,

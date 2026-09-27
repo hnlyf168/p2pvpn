@@ -8,13 +8,14 @@ public sealed class DownloadCatalog
 {
     private readonly string directory;
     public DownloadItem[] Items { get; }
+    public DownloadItem[] AllItems { get; }
     public DownloadCatalog(IWebHostEnvironment environment, IConfiguration configuration)
     {
         directory = Path.GetFullPath(configuration["DownloadDirectory"] ?? Path.Combine(environment.ContentRootPath, "downloads"));
-        Items = Directory.Exists(directory) ? Directory.GetFiles(directory, "edge-vpn-*.zip")
-            .Select(Read).Where(x => x is not null).Cast<DownloadItem>()
-            .GroupBy(x => (x.Kind, x.Platform)).Select(g => g.OrderByDescending(x => System.Version.Parse(x.Version)).First())
-            .OrderBy(x => x.Kind).ThenBy(x => x.Platform).ToArray() : [];
+        AllItems = Directory.Exists(directory) ? Directory.GetFiles(directory, "edge-vpn-*.zip")
+            .Select(Read).Where(x => x is not null).Cast<DownloadItem>().ToArray() : [];
+        Items = AllItems.GroupBy(x => (x.Kind, x.Platform)).Select(g => g.OrderByDescending(x => System.Version.Parse(x.Version)).First())
+            .OrderBy(x => x.Kind).ThenBy(x => x.Platform).ToArray();
     }
     private static DownloadItem? Read(string path)
     {
