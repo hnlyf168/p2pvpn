@@ -88,9 +88,10 @@ def verify_archive(path, asset):
             basename = parts[-1].lower()
             require(basename not in ("client.json", "state.json", ".env", "claim.txt")
                     and not basename.endswith((".env", ".pem", ".key", ".pfx", ".p12"))
-                    and "admin-access" not in lower and "secrets" not in lower
+                    and "admin-access" not in lower
+                    and not ("secrets" in basename and basename.endswith((".json", ".txt", ".yaml", ".yml", ".toml", ".xml")))
                     and not any(p.lower() in (".git", "data", "deployment") for p in parts),
-                    "Private configuration found in archive")
+                    "Private configuration found in archive: " + name)
             total += member.file_size
             require(total <= 2 * 1024**3, "Archive expands beyond limit")
         require(archive.testzip() is None, "ZIP CRC verification failed")

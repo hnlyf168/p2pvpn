@@ -40,6 +40,10 @@ class ReleaseValidation(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     release.verify_archive(self.path, {"runtime": "self-contained"})
 
+    def test_runtime_library_is_not_a_secret_file(self):
+        self.archive("bin/Microsoft.Extensions.Configuration.UserSecrets.dll")
+        release.verify_archive(self.path, {"runtime": "self-contained"})
+
     def test_wrong_architecture_and_dynamic_elf(self):
         elf = bytearray(128)
         elf[:6] = b"\x7fELF\x02\x01"
