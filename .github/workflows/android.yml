@@ -44,7 +44,7 @@ jobs:
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/android-release.p12"
           printf '%s' "$ANDROID_KEYSTORE_PASSWORD" > "$RUNNER_TEMP/android-key-password"
           trap 'rm -f "$RUNNER_TEMP/android-release.p12" "$RUNNER_TEMP/android-key-password"' EXIT
-          dotnet publish src/Android/P2PVpnAndroid.csproj -c Release -o artifacts/android-build \
+          dotnet build src/Android/P2PVpnAndroid.csproj -c Release -t:SignAndroidPackage -o artifacts/android-build \
             -p:AndroidSdkDirectory="$ANDROID_HOME" -p:JavaSdkDirectory="$JAVA_HOME" \
             -p:AndroidKeyStore=true -p:AndroidSigningKeyStore="$RUNNER_TEMP/android-release.p12" \
             -p:AndroidSigningKeyAlias="$ANDROID_KEY_ALIAS" \

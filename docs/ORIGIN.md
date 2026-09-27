@@ -5,6 +5,7 @@
 
 复制：
 - P2PVpnClient → src/Client
+- P2PVpnAndroid → src/Android（安卓移植版本新增，原目录保持不变）
 - EdgeDdnsClient/ThirdParty/Qcxt.Net.P2P → src/Transport/Qcxt.Net.P2P
 - EdgeDdnsClient/ThirdParty/Qcxt.Net.QUIC → src/Transport/Qcxt.Net.QUIC
 
@@ -15,3 +16,5 @@
 
 构建无需访问 MyEdgeManager 目录。浏览器验证脚本使用 Playwright；
 本次验证复用了本机已有工具，运行自己的验证环境时自行指定 PLAYWRIGHT_MODULE。
+
+Android 版本沿用原生界面、VpnService、TUN、扫码和子网映射基础，认证、设备加入、密钥存储和会员中继改为独立平台协议；未复制旧调试签名 APK 或任何原签名私钥。

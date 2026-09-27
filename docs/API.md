@@ -77,3 +77,11 @@ POST /api/networks 可带 subnet（例如 10.88.0.0/24），不填写自动选�
 /admin/mail 写入字段：enabled、host、port、security（ssl/starttls）、username、password、fromEmail、fromName、notificationEmail、notifyRegistrations、notifyMembershipChanges。password 留空保留旧值，更改主机或发信账号时要求重新提供。保存为 AES-GCM 密文，HTTP 查询不返回密文或明文。TLS 证书正常验证，不允许明文 SMTP。
 
 节点心跳新增 deviceIds 数组，为该节点当前真实连接设备。仅有效节点凭据可上报；无效/已撤销设备不会计为在线。节点报告超过 45 秒不计入在线，节点自身健康下发窗口仍为 60 秒。历史 0.2.0 网络缺省迁移为原 10.77.0.0/16，已有设备身份和地址保持不变。
+
+## v0.3.6 Android 安装
+
+POST /api/networks/{id}/installations 使用已登录网络所有者权限，提交 {name,groupId,platform:"android"}。返回 id、expiresAt、joinUri、qrDataUrl；command 和 script 为空。二维码在服务端本地生成，不调用第三方二维码服务。票据在 edgevpn://join?server=<HTTPS平台地址>#<票据> 的 fragment 中，30 分钟有效。
+
+Android 应用经用户确认后 POST /api/install/redeem，Authorization: Bearer <票据>，JSON 为 {claim,platform:"android"}；claim 为随机 32 字节的 Base64URL，稳定保存用于同机重试。同一票据不能绑定不同 claim，设备撤销后也不能复用。响应与桌面 ClientProfile 相同。
+
+GET /api/device/profile 使用设备 Bearer token；账号禁用、设备撤销、网络或分组失效均拒绝认证。GET /api/downloads 中 Android 的 kind=client、platform=android，文件名 edge-vpn-client-android-版本.apk。下载接口提供 APK MIME 类型、SHA256 ETag 和 Range，计入运营下载统计。

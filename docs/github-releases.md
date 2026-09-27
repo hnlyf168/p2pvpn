@@ -38,3 +38,9 @@ python tools/github-release.py publish --output artifacts/github-release-0.3.4 -
 | 独立打洞节点 / 中继节点 | Linux x64 | 0.3.0 | 自包含 .NET |
 
 没有已验证的 Linux x86 32 位、ARMv6、Android 或 Windows ARM 安装包，不提供占位包。源码包对应发布标签；历史成品的编译提交没有统一记录，不能把发布标签当作所有二进制的可复现构建证明。后续要全自动编译，应先把原生构建镜像、构建提交和运行验证记录纳入独立构建流水线。
+
+## Android 独立构建发布
+
+新增 **Build and publish Android** 工作流，从源码构建 ARMv7 / ARM64 / x64 通用 APK，使用仓库签名 Secrets 正式签名，核对公开证书指纹、包名、版本和最低 Android API。默认保留 Actions 产物；勾选 publish 后，服务端回归通过才创建 android-v<版本> 预发布，附 APK、对应源码及 SHA256SUMS。
+
+Android 版本号独立于桌面和控制服务；后续升级必须保留签名且递增 ApplicationVersion。首次移植没有进行真机/模拟器组网验证。旧的 0.3.4 范围说明描述历史发布，安卓以独立 Android Release 为准。
