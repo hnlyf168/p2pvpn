@@ -35,7 +35,7 @@ jobs:
       - name: Build source
         run: dotnet build EdgeVpn.sln -c Release
       - name: Integration tests
-        run: dotnet run --project tests/Integration -c Release --no-build
+        run: dotnet run --project tests/Integration -c Release
 
   publish:
     needs: validate

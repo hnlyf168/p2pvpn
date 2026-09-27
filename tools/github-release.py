@@ -34,7 +34,7 @@ def sha256(path):
 
 
 def write_json(path, value):
-    Path(path).write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    Path(path).write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
 
 
 def validate_version(version):
@@ -128,9 +128,9 @@ def add_windows_license(path):
     with zipfile.ZipFile(path, "a", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         if "Wintun-LICENSE.txt" not in archive.namelist():
             entry = zipfile.ZipInfo("Wintun-LICENSE.txt", (2020, 1, 1, 0, 0, 0))
-            entry.compress_type = zipfile.ZIP_DEFLATED
+            entry.compress_type = zipfile.ZIP_STORED
             entry.external_attr = 0o100644 << 16
-            archive.writestr(entry, (ROOT / "docs/third-party/Wintun-LICENSE.txt").read_bytes())
+            archive.writestr(entry, (ROOT / "docs/third-party/Wintun-LICENSE.txt").read_bytes().replace(b"\r\n", b"\n"))
             return "Added Wintun-LICENSE.txt; executable files unchanged."
     return None
 
@@ -181,9 +181,9 @@ Windows 发布副本补充 Wintun 许可证，程序文件未改动，最终校�
 
 这次发布使用已编译成品，流水线负责校验和发布；没有在 GitHub 上重新编译所有平台，也不表示所有组件版本相同。
 '''
-    (output / "RELEASE_NOTES.md").write_text(notes, encoding="utf-8")
+    (output / "RELEASE_NOTES.md").write_text(notes, encoding="utf-8", newline="\n")
     checksums = "".join(f"{sha256(p)}  {p.name}\n" for p in sorted(output.iterdir()) if p.is_file())
-    (output / "SHA256SUMS").write_text(checksums, encoding="utf-8")
+    (output / "SHA256SUMS").write_text(checksums, encoding="utf-8", newline="\n")
     print("Prepared", output)
 
 

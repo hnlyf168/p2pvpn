@@ -58,6 +58,10 @@ class ReleaseValidation(unittest.TestCase):
         with self.assertRaisesRegex(AssertionError, "fully static"):
             release.verify_archive(self.path, {"runtime": "static-musl-nativeaot", "platform": "linux-x64"})
 
+    def test_json_output_uses_canonical_lf(self):
+        release.write_json(self.path, {"example": "value"})
+        self.assertNotIn(b"\r", self.path.read_bytes())
+
     def test_cache_hash_mismatch(self):
         asset = self.manifest["assets"][0]
         (self.path.parent / asset["name"]).write_bytes(b"corrupt")
