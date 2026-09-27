@@ -44,13 +44,10 @@ jobs:
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/android-release.p12"
           printf '%s' "$ANDROID_KEYSTORE_PASSWORD" > "$RUNNER_TEMP/android-key-password"
           trap 'rm -f "$RUNNER_TEMP/android-release.p12" "$RUNNER_TEMP/android-key-password"' EXIT
-          dotnet build src/Android/P2PVpnAndroid.csproj -c Release -t:SignAndroidPackage -o artifacts/android-build \
+          dotnet build src/Android/P2PVpnAndroid.csproj -c Release -t:PackageForAndroid \
             -p:AndroidSdkDirectory="$ANDROID_HOME" -p:JavaSdkDirectory="$JAVA_HOME" \
-            -p:AndroidKeyStore=true -p:AndroidSigningKeyStore="$RUNNER_TEMP/android-release.p12" \
-            -p:AndroidSigningKeyAlias="$ANDROID_KEY_ALIAS" \
-            -p:AndroidSigningKeyPass="file:$RUNNER_TEMP/android-key-password" \
-            -p:AndroidSigningStorePass="file:$RUNNER_TEMP/android-key-password" \
             -p:AndroidPackageFormats=apk
+          python3 tools/sign-android.py
       - name: Verify identity, release signature and native architectures
         run: python3 tools/package-android.py
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
