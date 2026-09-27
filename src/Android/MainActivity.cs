@@ -51,7 +51,8 @@ public sealed class MainActivity : Activity
 
     private void BuildUi()
     {
-        var scroll = new ScrollView(this) { FillViewport = true, FitsSystemWindows = true };
+        var scroll = new ScrollView(this) { FillViewport = true };
+        scroll.SetFitsSystemWindows(true);
         var root = Stack(Orientation.Vertical, 18);
         root.SetPadding(Dp(18), Dp(24), Dp(18), Dp(36));
         root.SetBackgroundColor(Color.ParseColor("#071724")); scroll.AddView(root);
@@ -142,7 +143,7 @@ public sealed class MainActivity : Activity
             if (IsDestroyed || IsFinishing) return;
             _join.Text = ""; LoadProfile();
             Toast.MakeText(this, "已加入网络，点击连接 VPN 即可上线。", ToastLength.Long)?.Show();
-        } catch (OperationCanceledException) when (_lifetime.IsCancellationRequested) { }
+        } catch (System.OperationCanceledException) when (_lifetime.IsCancellationRequested) { }
         catch (Exception ex) { if (!IsDestroyed && !IsFinishing) ShowError(ex.Message); }
         finally {
             _joining = false;
