@@ -1,0 +1,7 @@
+﻿**/bin
+**/obj
+**/data
+artifacts
+.git
+.env
+**/client.json

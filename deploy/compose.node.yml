@@ -1,0 +1,10 @@
+﻿services:
+  node:
+    build:
+      context: ..
+      dockerfile: deploy/Node.Dockerfile
+    network_mode: host
+    restart: unless-stopped
+    env_file: node.env
+    security_opt:
+      - no-new-privileges:true

@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PublishAot>true</PublishAot>
+    <IsAotCompatible>true</IsAotCompatible>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <StripSymbols>true</StripSymbols>
+    <OptimizationPreference>Size</OptimizationPreference>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Version>0.3.3</Version>
+    <AssemblyVersion>0.3.3.0</AssemblyVersion>
+    <FileVersion>0.3.3.0</FileVersion>
+    <StaticExecutable Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))">true</StaticExecutable>
+    <StaticOpenSslLinking Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))">true</StaticOpenSslLinking>
+    <ApplicationManifest Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win-'))">app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Transport\Qcxt.Net.P2P\Qcxt.Net.P2P.csproj" />
+    <None Include="wintun.dll" Condition="'$(RuntimeIdentifier)' == 'win-x64'"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <None Update="runtimes\win-x86\native\wintun.dll" Condition="'$(RuntimeIdentifier)' == 'win-x86'"
+          TargetPath="wintun.dll" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
+    <None Include="安装客户端.cmd" Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win-'))" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="卸载客户端.cmd" Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win-'))" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="..\..\docs\third-party\Wintun-LICENSE.txt" Link="Wintun-LICENSE.txt" Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('win-'))" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="README.md" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="client.example.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="install-linux.sh" Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Include="uninstall-linux.sh" Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup Condition="$([System.String]::Copy('$(RuntimeIdentifier)').StartsWith('linux-'))">
+    <!-- 静态 musl AOT 不允许运行时加载 libc；在链接阶段直接解析 ioctl/open/read/write/poll 等 libc 调用。 -->
+    <DirectPInvoke Include="libc" />
+  </ItemGroup>
+
+</Project>

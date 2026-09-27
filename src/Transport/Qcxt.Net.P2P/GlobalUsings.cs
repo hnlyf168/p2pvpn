@@ -1,0 +1,12 @@
+global using System.Buffers;
+global using System.Buffers.Binary;
+global using System.Collections.Concurrent;
+global using System.Diagnostics;
+global using System.Net;
+global using System.Net.Sockets;
+global using System.Security.Cryptography;
+global using System.Text;
+global using System.Threading.Channels;
+global using Qcxt.Net.Quic;
+global using Qcxt.Net.Quic.Configuration;
+global using Qcxt.Net.Quic.Security;

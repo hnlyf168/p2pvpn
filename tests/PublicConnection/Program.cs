@@ -1,0 +1,22 @@
+﻿using System.Net;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using EdgeVpn;
+using Qcxt.Net.P2P;
+using Qcxt.Net.Quic.Security;
+if(args.Length != 1) throw new ArgumentException("Provide directory containing two short-lived deployment test profiles.");
+var json=new JsonSerializerOptions(JsonSerializerDefaults.Web);
+var a=JsonSerializer.Deserialize<ClientProfile>(File.ReadAllText(Path.Combine(args[0],"a.json")),json)!;
+var b=JsonSerializer.Deserialize<ClientProfile>(File.ReadAllText(Path.Combine(args[0],"b.json")),json)!;
+var endpoint=a.Server.Split(':');
+var ip=(await Dns.GetHostAddressesAsync(endpoint[0])).First(x=>x.AddressFamily==System.Net.Sockets.AddressFamily.InterNetwork);
+using var timeout=new CancellationTokenSource(TimeSpan.FromSeconds(55));var ct=timeout.Token;
+using var keys=new PreSharedKeyProvider(SHA256.HashData(Encoding.UTF8.GetBytes(a.SharedSecret)));
+await using var first=Make(a);await using var second=Make(b);
+await Task.WhenAll(first.StartAsync(new IPEndPoint(ip,int.Parse(endpoint[1])),keys,cancellationToken:ct),second.StartAsync(new IPEndPoint(ip,int.Parse(endpoint[1])),keys,cancellationToken:ct));
+while(!first.Peers.Any(p=>p.DirectConnected)||!second.Peers.Any(p=>p.DirectConnected))await Task.Delay(200,ct);
+await Transfer(first,second);await Transfer(second,first);
+Console.WriteLine("PASS: production HTTPS profiles, public coordinator authentication and discovery, bidirectional direct encrypted 16 KB transfer; no relay and no OS network changes.");
+P2PNode Make(ClientProfile p)=>new(new P2PConnectionOptions{SessionId=p.Group,PeerId=p.DeviceId,RegistrationCredential=p.DeviceToken,EnableCoordinatorRelay=false,EnableUdpHolePunching=true,EnableTcpHolePunching=true,EagerHolePunching=true,KeepAliveInterval=TimeSpan.FromSeconds(2),LinkIdleTimeout=TimeSpan.FromSeconds(15)});
+async Task Transfer(P2PNode from,P2PNode to){var data=RandomNumberGenerator.GetBytes(16000);await from.Session.SendAsync(to.Session.LocalPeerId,data,cancellationToken:ct);using var actual=await to.Session.ReceiveAsync(ct);if(!actual.Payload.Span.SequenceEqual(data))throw new IOException("Payload mismatch");}

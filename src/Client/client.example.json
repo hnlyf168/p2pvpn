@@ -1,0 +1,17 @@
+﻿{
+  "server": "vpn.example.com:49000",
+  "group": "由网站生成",
+  "sharedSecret": "replace-with-generated-network-secret",
+  "deviceId": "由网站生成",
+  "deviceToken": "由网站生成",
+  "controlUrl": "https://vpn.example.com",
+  "coordinatorServers": [
+    "vpn.example.com:49000"
+  ],
+  "relayUrls": [],
+  "dataSecret": "由网站生成",
+  "adapterName": "Edge VPN",
+  "enableAutoUpdate": false,
+  "enableUpnp": true,
+  "traversalMode": "eager"
+}

@@ -1,0 +1,23 @@
+[Unit]
+Description=Edge VPN public control plane
+After=network-online.target
+Wants=network-online.target
+[Service]
+User=edgevpn
+Group=edgevpn
+WorkingDirectory=/opt/edge-vpn/current
+ExecStart=/opt/edge-vpn/current/EdgeVpn.ControlPlane
+EnvironmentFile=/etc/edge-vpn/control.env
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/edge-vpn-control
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+LimitNOFILE=65535
+MemoryMax=768M
+[Install]
+WantedBy=multi-user.target

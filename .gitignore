@@ -1,0 +1,24 @@
+# Build outputs and local operational data
+**/bin/
+**/obj/
+**/data/
+artifacts/
+node_modules/
+__pycache__/
+*.pyc
+.env
+**/*.env
+**/client.json
+**/admin-access*.txt
+**/secrets*.json
+**/state.json
+**/claim.txt
+**/*-join.txt
+**/remote-known-hosts
+*.user
+*.log
+*.pfx
+*.p12
+*.key
+*.pem
+src/ControlPlane/downloads/

@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Qcxt.Net.Quic</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <Product>Qcxt high-performance QUIC transport</Product>
+    <Description>Pool-backed, actor-based QUIC transport. TLS key provisioning is external.</Description>
+    <Title>Qcxt.Net.QUIC</Title>
+  </PropertyGroup>
+</Project>

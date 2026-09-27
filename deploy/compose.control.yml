@@ -1,0 +1,13 @@
+﻿services:
+  control:
+    build:
+      context: ..
+      dockerfile: deploy/ControlPlane.Dockerfile
+    network_mode: host
+    restart: unless-stopped
+    env_file: control.env
+    volumes:
+      - ./data:/data
+      - ../artifacts/downloads:/app/downloads:ro
+    security_opt:
+      - no-new-privileges:true

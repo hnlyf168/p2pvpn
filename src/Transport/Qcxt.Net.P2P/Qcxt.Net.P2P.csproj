@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <RootNamespace>Qcxt.Net.P2P</RootNamespace>
+    <AssemblyName>Qcxt.Net.P2P</AssemblyName>
+    <Description>基于 QUIC/TCP/UDP 的 P2P 组网与隧道传输类库</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Qcxt.Net.QUIC\Qcxt.Net.QUIC.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,13 @@
+'use strict';
+const labels={client:{name:'客户端',icon:'⊞',description:'连接你的 Windows 或 Linux 设备。配合独立 client.json 使用。'},control:{name:'控制服务',icon:'⌘',description:'公众网站、账号认证、网络与打洞协调。不转发业务流量。'},relay:{name:'独立中继节点',icon:'◇',description:'高级会员 WSS 后备通道。需要管理员签发节点授权配置。'},punch:{name:'备用打洞节点',icon:'⌁',description:'辅助认证与打洞协调。主节点连接失败后尝试备用节点。'}};
+let artifacts=[],category='client';
+async function initDownloads(){try{artifacts=await UI.api('/api/downloads');renderDownloads();}catch(e){document.getElementById('download-catalog').innerHTML='<div class="empty-state">下载列表暂时不可用，请稍后刷新。</div>';}}
+function renderDownloads(){const el=document.getElementById('download-catalog');if(!el)return;const list=artifacts.filter(x=>category==='client'?x.kind==='client':x.kind!=='client');
+ el.innerHTML=list.length?list.map(x=>{const info=labels[x.kind]||labels.client;const system=({'win-x64':'Windows x64','win-x86':'Windows x86','linux-x64':'Linux x64','linux-arm64':'Linux ARM64','linux-arm':'Linux ARM32 (ARMv7)'})[x.platform]||x.platform;return '<article class="download-card"><div class="download-type">'+UI.esc(x.kind.toUpperCase())+' / '+UI.esc(system)+'</div><h3>'+UI.esc(info.name)+'</h3><p>'+UI.esc(info.description)+'</p><span class="version">v'+UI.esc(x.version)+' · '+(x.size/1048576).toFixed(1)+' MB</span><a class="button download-button" href="'+UI.esc(x.url)+'" download>下载 '+UI.esc(system)+' <span>↓</span></a><div class="hash-row"><code title="'+UI.esc(x.sha256)+'">SHA-256 '+UI.esc(x.sha256)+'</code><button class="icon-button" data-hash="'+UI.esc(x.sha256)+'" aria-label="复制 SHA-256 校验值">复制</button></div><small>发布于 '+UI.date(x.publishedAt).split(' ')[0]+'</small></article>';}).join(''):'<div class="empty-state">这一分类暂时没有发布包。</div>';
+ el.querySelectorAll('[data-hash]').forEach(b=>b.onclick=()=>UI.copy(b.dataset.hash));}
+document.querySelectorAll('[data-kind]').forEach(b=>b.onclick=()=>{category=b.dataset.kind;document.querySelectorAll('[data-kind]').forEach(t=>t.setAttribute('aria-selected',String(t===b)));renderDownloads();});
+const menu=document.querySelector('.menu-toggle');if(menu)menu.onclick=()=>{const open=document.querySelector('.site-header').classList.toggle('menu-open');menu.setAttribute('aria-expanded',String(open));};
+initDownloads();
+
+
+const installCommand="curl -fsSL '"+location.origin+"/install.sh' -o edge-vpn-install.sh && sudo sh edge-vpn-install.sh";const installEl=document.getElementById('public-install-command');if(installEl){installEl.textContent=installCommand;document.getElementById('copy-install-command').onclick=()=>UI.copy(installCommand);}
