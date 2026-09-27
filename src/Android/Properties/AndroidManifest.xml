@@ -6,6 +6,11 @@
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
   <uses-permission android:name="android.permission.CAMERA" />
+  <uses-feature android:name="android.hardware.camera" android:required="false" />
   <application android:allowBackup="false" android:usesCleartextTraffic="false" android:label="P2P VPN"
-    android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher" android:theme="@style/AppTheme" />
+    android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher" android:theme="@style/AppTheme">
+    <service android:name="pub.hngs.vpn.VpnTunnelService">
+      <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE" android:value="Encrypted P2P VPN tunnel" />
+    </service>
+  </application>
 </manifest>

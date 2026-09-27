@@ -10,6 +10,7 @@
     <ApplicationDisplayVersion>1.1.0</ApplicationDisplayVersion>
     <SupportedOSPlatformVersion>26.0</SupportedOSPlatformVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <UseCurrentRuntimeIdentifier>false</UseCurrentRuntimeIdentifier>
     <RuntimeIdentifiers>android-arm;android-arm64;android-x64</RuntimeIdentifiers>
     <AndroidUseAapt2>true</AndroidUseAapt2>
     <AndroidLinkMode Condition="'$(Configuration)' == 'Release'">SdkOnly</AndroidLinkMode>

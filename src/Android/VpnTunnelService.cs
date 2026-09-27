@@ -9,7 +9,6 @@ namespace P2PVpnAndroid;
 [Service(Name = "pub.hngs.vpn.VpnTunnelService", Permission = "android.permission.BIND_VPN_SERVICE",
     Exported = true, ForegroundServiceType = ForegroundService.TypeSpecialUse)]
 [IntentFilter([Android.Net.VpnService.ServiceInterface])]
-[MetaData("android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE", Value = "Encrypted P2P VPN tunnel")]
 public sealed class VpnTunnelService : Android.Net.VpnService
 {
     public const string ActionConnect = "pub.hngs.vpn.CONNECT";
@@ -32,7 +31,8 @@ public sealed class VpnTunnelService : Android.Net.VpnService
         if (_worker is { IsCompleted: false }) return StartCommandResult.Sticky;
         StartForeground(NotificationId, BuildNotification("正在连接…"));
         _lifetime = new CancellationTokenSource();
-        _worker = RunAsync(_lifetime.Token);
+        var lifetime = _lifetime;
+        _worker = Task.Run(() => RunAsync(lifetime.Token));
         return StartCommandResult.Sticky;
     }
 
@@ -43,6 +43,8 @@ public sealed class VpnTunnelService : Android.Net.VpnService
         catch (Exception ex) { VpnRuntimeState.Publish(new(false, false, "连接失败", "--", 0, ex.Message)); }
         finally
         {
+            if (cancellationToken.IsCancellationRequested)
+                VpnRuntimeState.Publish(new(false, false, "未连接", "--", 0, "--"));
             StopForeground(StopForegroundFlags.Remove);
             StopSelf();
         }
@@ -83,8 +85,9 @@ public sealed class VpnTunnelService : Android.Net.VpnService
     private void StopTunnel()
     {
         try { _lifetime?.Cancel(); } catch { }
-        VpnRuntimeState.Publish(new(false, false, "未连接", "--", 0, "--"));
-        StopForeground(StopForegroundFlags.Remove); StopSelf();
+        if (_worker is { IsCompleted: false })
+            VpnRuntimeState.Publish(new(true, false, "正在断开", "--", 0, "正在释放连接"));
+        else { VpnRuntimeState.Publish(new(false, false, "未连接", "--", 0, "--")); StopForeground(StopForegroundFlags.Remove); StopSelf(); }
     }
 
     public override void OnRevoke() { StopTunnel(); base.OnRevoke(); }

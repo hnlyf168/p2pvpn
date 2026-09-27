@@ -120,6 +120,8 @@ try
     await Call("/api/networks/" + id + "/devices/" + mobile.DeviceId, null, ownerToken, "DELETE");
     await Expect("/api/device/profile", null, mobile.DeviceToken, 401, "GET");
     await Expect("/api/install/redeem", new { claim = mobileClaim, platform = "android" }, mobileToken, 401);
+    // Respect the real per-IP authentication limiter between enrollment test groups.
+    await Task.Delay(TimeSpan.FromSeconds(61), ct);
     var key = await Call("/api/networks/" + id + "/keys", new { name = "test", groupId = group, uses = 3, validHours = 1 }, ownerToken);
     string joinKey = key.GetProperty("key").GetString()!;
     var a = (await Call("/api/enroll", new { key = joinKey, name = "alpha" })).Deserialize<ClientProfile>(WebJson())!;
