@@ -1,0 +1,116 @@
+name: Build and publish Android
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publish the signed APK as an Android prerelease'
+        required: true
+        default: false
+        type: boolean
+permissions:
+  contents: read
+concurrency:
+  group: android-release
+  cancel-in-progress: false
+jobs:
+  build:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          global-json-file: global.json
+      - name: Install Android build dependencies
+        shell: bash
+        run: |
+          echo "JAVA_HOME=$JAVA_HOME_21_X64" >> "$GITHUB_ENV"
+          dotnet workload install android --skip-manifest-update
+          dotnet build src/Android/P2PVpnAndroid.csproj -t:InstallAndroidDependencies -f net10.0-android \
+            -p:AndroidSdkDirectory="$ANDROID_HOME" -p:JavaSdkDirectory="$JAVA_HOME_21_X64" -p:AcceptAndroidSdkLicenses=True
+      - name: Sign release APK
+        shell: bash
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          set -euo pipefail
+          umask 077
+          test -n "$ANDROID_KEYSTORE_BASE64"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/android-release.p12"
+          printf '%s' "$ANDROID_KEYSTORE_PASSWORD" > "$RUNNER_TEMP/android-key-password"
+          trap 'rm -f "$RUNNER_TEMP/android-release.p12" "$RUNNER_TEMP/android-key-password"' EXIT
+          dotnet publish src/Android/P2PVpnAndroid.csproj -c Release -o artifacts/android-build \
+            -p:AndroidSdkDirectory="$ANDROID_HOME" -p:JavaSdkDirectory="$JAVA_HOME" \
+            -p:AndroidKeyStore=true -p:AndroidSigningKeyStore="$RUNNER_TEMP/android-release.p12" \
+            -p:AndroidSigningKeyAlias="$ANDROID_KEY_ALIAS" \
+            -p:AndroidSigningKeyPass="file:$RUNNER_TEMP/android-key-password" \
+            -p:AndroidSigningStorePass="file:$RUNNER_TEMP/android-key-password" \
+            -p:AndroidPackageFormats=apk
+      - name: Verify identity, release signature and native architectures
+        run: python3 tools/package-android.py
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-release
+          path: artifacts/android-release/
+          if-no-files-found: error
+          retention-days: 30
+  control:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          global-json-file: global.json
+      - name: Build and test control protocol
+        run: |
+          dotnet build EdgeVpn.sln -c Release
+          dotnet run --project tests/Traffic -c Release
+          dotnet run --project tests/Integration -c Release
+          python3 -m unittest discover -s tests/Release -v
+          node --check src/ControlPlane/wwwroot/setup.js
+          node --check src/ControlPlane/wwwroot/downloads.js
+      - name: Package updated control service
+        run: |
+          dotnet publish src/ControlPlane -c Release -r linux-x64 --self-contained true -o artifacts/control
+          tar -czf artifacts/control-linux-x64.tar.gz -C artifacts/control .
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: android-control
+          path: artifacts/control-linux-x64.tar.gz
+          if-no-files-found: error
+          retention-days: 30
+  publish:
+    if: inputs.publish
+    needs: [build, control]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: android-release
+          path: artifacts/android-release
+      - name: Publish signed APK and matching source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(python3 -c "import xml.etree.ElementTree as E; print(E.parse('src/Android/P2PVpnAndroid.csproj').findtext('.//ApplicationDisplayVersion'))")
+          tag="android-v$version"
+          git archive --format=zip --prefix="p2pvpn-$tag/" -o "artifacts/android-release/p2pvpn-source-$tag.zip" HEAD
+          (cd artifacts/android-release && sha256sum *.apk *.zip > SHA256SUMS)
+          gh release create "$tag" artifacts/android-release/* --target "$GITHUB_SHA" \
+            --title "Android $version · 独立客户端" --notes-file docs/ANDROID-RELEASE.md --prerelease --latest=false

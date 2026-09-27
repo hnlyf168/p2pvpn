@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationId>pub.hngs.vpn</ApplicationId>
+    <ApplicationTitle>P2P VPN</ApplicationTitle>
+    <ApplicationVersion>14</ApplicationVersion>
+    <ApplicationDisplayVersion>1.1.0</ApplicationDisplayVersion>
+    <SupportedOSPlatformVersion>26.0</SupportedOSPlatformVersion>
+    <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <RuntimeIdentifiers>android-arm;android-arm64;android-x64</RuntimeIdentifiers>
+    <AndroidUseAapt2>true</AndroidUseAapt2>
+    <AndroidLinkMode Condition="'$(Configuration)' == 'Release'">SdkOnly</AndroidLinkMode>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Client\NetworkPolicy.cs" Link="NetworkPolicy.cs" />
+    <Compile Include="..\Client\VpnIngressGuard.cs" Link="VpnIngressGuard.cs" />
+    <Compile Include="..\Client\LanInterfaceCollector.cs" Link="LanInterfaceCollector.cs" />
+    <Compile Include="..\Client\ServerAddressSelector.cs" Link="ServerAddressSelector.cs" />
+    <ProjectReference Include="..\Transport\Qcxt.Net.P2P\Qcxt.Net.P2P.csproj" />
+    <PackageReference Include="ZXing.Net" Version="0.16.11" />
+  </ItemGroup>
+</Project>

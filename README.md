@@ -88,3 +88,9 @@ dotnet run --project tests/Integration -c Release
 **[部署说明](docs/DEPLOYMENT.md) · [架构边界](docs/ARCHITECTURE.md) · [API](docs/API.md) · [验证记录](docs/VALIDATION.md) · [源码来源](docs/ORIGIN.md) · [第三方组件](THIRD_PARTY_NOTICES.md)**
 
 安装包从官网获取；仓库不包含生产配置、管理员密码、SMTP 授权码、设备身份文件或部署备份。
+
+## Android 客户端
+
+原安卓客户端已移植到 [src/Android](src/Android/README.md)。独立包名和新正式签名，支持 Android 8+ 的 ARMv7、ARM64、x64。控制台添加设备时选择 Android，通过短期链接或二维码导入，再允许系统 VPN 连接。
+
+[Android 构建发布流水线](.github/workflows/android.yml)在 GitHub 上编译、签名并检查 APK；首次移植版作为预发布提供，尚未进行真机组网验证。

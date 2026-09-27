@@ -24,3 +24,6 @@ __pycache__/
 src/ControlPlane/downloads/
 
 **/traffic-statistics.json
+
+*.keystore
+*.jks

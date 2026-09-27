@@ -301,7 +301,7 @@ app.MapPost("/api/networks/{id}/rotate", (HttpContext ctx, string id) =>
 app.MapPost("/api/networks/{id}/installations", (HttpContext ctx, string id, InstallRequest request) =>
 {
     var user = User(ctx); var name = Name(request.Name);
-    if (request.Platform is not ("win-x64" or "linux" or "linux-x64" or "linux-arm64" or "linux-arm")) throw new ArgumentException("请选择 Windows x64 或 Linux（x64 / ARM64 / ARM32）。");
+    if (request.Platform is not ("win-x64" or "linux" or "linux-x64" or "linux-arm64" or "linux-arm" or "android")) throw new ArgumentException("请选择 Windows、Linux 或 Android。");
     return store.Write(db => {
         var n = Owned(db, id, user);
         if (!n.Groups.Any(g => g.Id == request.GroupId)) throw new KeyNotFoundException("分组不存在。");
@@ -321,7 +321,15 @@ app.MapPost("/api/networks/{id}/installations", (HttpContext ctx, string id, Ins
             ? "$ErrorActionPreference='Stop'; [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; $p=Join-Path $env:TEMP ('EdgeVpn-'+[guid]::NewGuid().ToString('N')+'.ps1'); Invoke-WebRequest -UseBasicParsing '"+origin+"/install.ps1' -OutFile $p; if(Test-Path -LiteralPath $p){ & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $p -Ticket '"+token+"' }"
             : "f=$(mktemp) && curl -fsSL '"+origin+"/install.sh' -o \"$f\" && sudo sh \"$f\" --ticket '"+token+"'; r=$?; [ -z \"${f:-}\" ] || rm -f -- \"$f\"; (exit \"$r\")";
         db.InstallTickets.Add(ticket); Audit(db, user.Id, "installation.create", ticket.Id);
-        return new { ticket.Id, ticket.Name, ticket.Platform, ticket.ExpiresAt, command, script };
+        var joinUri = request.Platform == "android" ? "edgevpn://join?server=" + Uri.EscapeDataString(origin) + "#" + token : "";
+        string qrDataUrl = "";
+        if (request.Platform == "android") {
+            command = ""; script = "";
+            using var qrData = QRCoder.QRCodeGenerator.GenerateQrCode(joinUri, QRCoder.QRCodeGenerator.ECCLevel.M);
+            using var qr = new QRCoder.SvgQRCode(qrData);
+            qrDataUrl = "data:image/svg+xml;base64," + Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(qr.GetGraphic(4)));
+        }
+        return new { ticket.Id, ticket.Name, ticket.Platform, ticket.ExpiresAt, command, script, joinUri, qrDataUrl };
     });
 });
 app.MapGet("/api/networks/{id}/installations/{ticketId}", (HttpContext ctx, string id, string ticketId) => {
@@ -349,7 +357,7 @@ app.MapPost("/api/install/redeem", (HttpContext ctx, InstallClaimRequest request
             ?? throw new UnauthorizedAccessException("安装命令已失效，请回控制台重新生成。");
         var linuxTarget = request.Platform is "linux-x64" or "linux-arm64" or "linux-arm";
         if (t.Platform != request.Platform && !(t.Platform == "linux" && linuxTarget)) throw new ArgumentException("安装命令与设备系统不匹配，请回控制台重新生成。");
-        if (request.Platform is not ("win-x64" or "linux-x64" or "linux-arm64" or "linux-arm")) throw new ArgumentException("未支持的设备架构。");
+        if (request.Platform is not ("win-x64" or "linux-x64" or "linux-arm64" or "linux-arm" or "android")) throw new ArgumentException("未支持的设备架构。");
         var n = db.Networks.FirstOrDefault(n => n.Id == t.NetworkId) ?? throw new UnauthorizedAccessException("网络已删除。");
         var user = db.Accounts.Single(a => a.Id == n.OwnerId);
         if (user.Disabled || !n.Groups.Any(g => g.Id == t.GroupId)) throw new UnauthorizedAccessException("网络账号或分组已停用。");
@@ -403,7 +411,7 @@ app.MapGet("/downloads/{file}", (HttpContext ctx, string file) =>
     var item = catalog.AllItems.FirstOrDefault(i => i.Name == file);
     if (item is null) return Results.NotFound();
     ctx.Response.Headers.CacheControl = "public, max-age=3600";
-    return Results.File(catalog.PathFor(item), "application/zip", file, enableRangeProcessing: true,
+    return Results.File(catalog.PathFor(item), item.Platform == "android" ? "application/vnd.android.package-archive" : "application/zip", file, enableRangeProcessing: true,
         entityTag: new Microsoft.Net.Http.Headers.EntityTagHeaderValue("\"" + item.Sha256 + "\""));
 });
 app.MapGet("/internal/punch/snapshot", (HttpContext ctx) => { NodeAuth(ctx, punchKey, "punch"); return Snapshot(store); });

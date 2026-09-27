@@ -21,6 +21,9 @@ const string testPackage = "edge-vpn-client-linux-x64-0.0.1.zip";
 using (var zip = System.IO.Compression.ZipFile.Open(Path.Combine(testDownloads, testPackage), System.IO.Compression.ZipArchiveMode.Create))
 using (var writer = new StreamWriter(zip.CreateEntry("test.txt").Open())) writer.Write("isolated integration fixture");
 File.Copy(Path.Combine(testDownloads, testPackage), Path.Combine(testDownloads, "edge-vpn-client-linux-x64-0.0.2.zip"));
+File.Copy(Path.Combine(testDownloads, testPackage), Path.Combine(testDownloads, "edge-vpn-client-android-1.1.0.apk"));
+File.Copy(Path.Combine(testDownloads, testPackage), Path.Combine(testDownloads, "edge-vpn-relay-android-1.1.0.apk"));
+File.Copy(Path.Combine(testDownloads, testPackage), Path.Combine(testDownloads, "edge-vpn-client-linux-arm-1.1.0.apk"));
 var children = new List<Process>();
 var admin = Secrets.Token(); var punch = Secrets.Token(); var relay = Secrets.Token();
 int webPort = FreePort(), relayPort = FreePort(), vpnPort = FreePort(), punchPort = FreePort();
@@ -54,7 +57,7 @@ try
     using var nodeHttp = new HttpClient();
     await Until(async () => { try { return (await nodeHttp.GetAsync($"http://127.0.0.1:{relayPort}/health", ct)).IsSuccessStatusCode; } catch { return false; } });
     var downloadCatalog = await Call("/api/downloads", null, null, "GET");
-    Check(downloadCatalog.GetArrayLength() == 1 && downloadCatalog[0].GetProperty("version").GetString() == "0.0.2", "catalog lists latest package while historical URLs remain downloadable");
+    Check(downloadCatalog.GetArrayLength() == 2 && downloadCatalog.EnumerateArray().Any(x => x.GetProperty("platform").GetString() == "linux-x64" && x.GetProperty("version").GetString() == "0.0.2"), "catalog lists latest package while historical URLs remain downloadable");
     await Expect("/admin/traffic", null, null, 401, "GET");
     await http.GetStringAsync("/", ct);
     await http.GetStringAsync("/downloads?ticket=must-not-be-stored", ct);
@@ -88,6 +91,35 @@ try
     var hidden = await Call("/api/networks", null, otherToken, "GET");
     Check(hidden.GetArrayLength() == 0, "tenant lists isolated");
     await Expect("/admin/accounts/" + ownerId + "/plan", new { plan = "pro", expiresAt = DateTimeOffset.UtcNow.AddDays(1) }, ownerToken, 401, "PUT");
+    using (var apk = await http.GetAsync("/downloads/edge-vpn-client-android-1.1.0.apk", ct))
+    {
+        Check(apk.IsSuccessStatusCode && apk.Content.Headers.ContentType?.MediaType == "application/vnd.android.package-archive",
+            "Android APK uses installable MIME type");
+        Check(apk.Headers.ETag is not null, "APK downloads expose integrity-based cache identity");
+    }
+    await Expect("/downloads/edge-vpn-relay-android-1.1.0.apk", null, null, 404, "GET");
+    await Expect("/downloads/edge-vpn-client-linux-arm-1.1.0.apk", null, null, 404, "GET");
+    var mobileTicket = await Call("/api/networks/" + id + "/installations",
+        new { name = "Android phone", groupId = group, platform = "android" }, ownerToken);
+    string mobileUri = mobileTicket.GetProperty("joinUri").GetString()!;
+    var mobileLink = new Uri(mobileUri);
+    Check(mobileLink.Scheme == "edgevpn" && mobileLink.Host == "join" &&
+        Uri.UnescapeDataString(mobileLink.Query[8..]) == controlUrl && mobileLink.Fragment.Length == 44,
+        "Android join link carries origin and fragment ticket");
+    Check(mobileTicket.GetProperty("command").GetString() == "" && mobileTicket.GetProperty("script").GetString() == "" &&
+        mobileTicket.GetProperty("qrDataUrl").GetString()!.StartsWith("data:image/svg+xml;base64,"),
+        "Android returns local QR data without desktop shell command");
+    string mobileToken = mobileLink.Fragment[1..], mobileClaim = new string('a', 43);
+    await Expect("/api/networks/" + id + "/installations/" + mobileTicket.GetProperty("id").GetString(), null, otherToken, 404, "GET");
+    await Expect("/api/install/redeem", new { claim = mobileClaim, platform = "linux-arm64" }, mobileToken, 400);
+    var mobile = (await Call("/api/install/redeem", new { claim = mobileClaim, platform = "android" }, mobileToken)).Deserialize<ClientProfile>(WebJson())!;
+    var retriedMobile = (await Call("/api/install/redeem", new { claim = mobileClaim, platform = "android" }, mobileToken)).Deserialize<ClientProfile>(WebJson())!;
+    Check(mobile.DeviceId == retriedMobile.DeviceId && mobile.DeviceToken == retriedMobile.DeviceToken &&
+        mobile.Subnet == "10.89.16.0/28" && mobile.RelayUrls.Length == 0, "Android retry is idempotent and respects subnet and basic membership");
+    await Expect("/api/install/redeem", new { claim = new string('b', 43), platform = "android" }, mobileToken, 401);
+    await Call("/api/networks/" + id + "/devices/" + mobile.DeviceId, null, ownerToken, "DELETE");
+    await Expect("/api/device/profile", null, mobile.DeviceToken, 401, "GET");
+    await Expect("/api/install/redeem", new { claim = mobileClaim, platform = "android" }, mobileToken, 401);
     var key = await Call("/api/networks/" + id + "/keys", new { name = "test", groupId = group, uses = 3, validHours = 1 }, ownerToken);
     string joinKey = key.GetProperty("key").GetString()!;
     var a = (await Call("/api/enroll", new { key = joinKey, name = "alpha" })).Deserialize<ClientProfile>(WebJson())!;
