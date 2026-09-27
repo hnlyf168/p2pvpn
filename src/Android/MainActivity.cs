@@ -51,7 +51,7 @@ public sealed class MainActivity : Activity
 
     private void BuildUi()
     {
-        var scroll = new ScrollView(this) { FillViewport = true };
+        var scroll = new ScrollView(this) { FillViewport = true, FitsSystemWindows = true };
         var root = Stack(Orientation.Vertical, 18);
         root.SetPadding(Dp(18), Dp(24), Dp(18), Dp(36));
         root.SetBackgroundColor(Color.ParseColor("#071724")); scroll.AddView(root);

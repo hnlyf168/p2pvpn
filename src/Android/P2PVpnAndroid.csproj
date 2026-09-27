@@ -10,6 +10,8 @@
     <ApplicationDisplayVersion>1.1.0</ApplicationDisplayVersion>
     <SupportedOSPlatformVersion>26.0</SupportedOSPlatformVersion>
     <AndroidPackageFormat>apk</AndroidPackageFormat>
+    <!-- Older Android workloads do not suppress the .NET 10 host publish RID (dotnet/android#10722). -->
+    <UseDefaultPublishRuntimeIdentifier>false</UseDefaultPublishRuntimeIdentifier>
     <UseCurrentRuntimeIdentifier>false</UseCurrentRuntimeIdentifier>
     <RuntimeIdentifiers>android-arm;android-arm64;android-x64</RuntimeIdentifiers>
     <AndroidUseAapt2>true</AndroidUseAapt2>
