@@ -1,0 +1,77 @@
+{
+  "releaseVersion": "0.3.4",
+  "title": "P2P VPN v0.3.4 · 多平台安装包与源码",
+  "sourceNote": "源码包对应本 Release 标签；二进制保留各组件原版本，来源是此前已验证的构建产物，并非本流水线重新编译的全部同版本二进制。",
+  "assets": [
+    {
+      "name": "edge-vpn-client-linux-x64-0.3.3.zip",
+      "kind": "client",
+      "platform": "linux-x64",
+      "version": "0.3.3",
+      "url": "https://vpn.hngs.pub/downloads/edge-vpn-client-linux-x64-0.3.3.zip",
+      "sha256": "31143774f41d8864aa7660825319276462c5fedf30eb099b77fb13f2fc53b054",
+      "size": 7095145,
+      "runtime": "static-musl-nativeaot"
+    },
+    {
+      "name": "edge-vpn-client-linux-arm64-0.3.3.zip",
+      "kind": "client",
+      "platform": "linux-arm64",
+      "version": "0.3.3",
+      "url": "https://vpn.hngs.pub/downloads/edge-vpn-client-linux-arm64-0.3.3.zip",
+      "sha256": "1490a5881fe609cdb59e2c5d173daaf3ce9dca43da97540d404d42089ed43c48",
+      "size": 7171572,
+      "runtime": "static-musl-nativeaot"
+    },
+    {
+      "name": "edge-vpn-client-linux-arm-0.3.3.zip",
+      "kind": "client",
+      "platform": "linux-arm",
+      "version": "0.3.3",
+      "url": "https://vpn.hngs.pub/downloads/edge-vpn-client-linux-arm-0.3.3.zip",
+      "sha256": "865e75269bd2d20e8319719e3d37a1664325e4a894cd5e72f17d8947e91be895",
+      "size": 6215341,
+      "runtime": "static-musl-nativeaot"
+    },
+    {
+      "name": "edge-vpn-client-win-x64-0.3.0.zip",
+      "kind": "client",
+      "platform": "win-x64",
+      "version": "0.3.0",
+      "url": "https://vpn.hngs.pub/downloads/edge-vpn-client-win-x64-0.3.0.zip",
+      "sha256": "ae82518a7b2df2622f25511587f62034487be770a8e4c7efd18c308531781abd",
+      "size": 32436662,
+      "runtime": "self-contained"
+    },
+    {
+      "name": "edge-vpn-control-linux-x64-0.3.4.zip",
+      "kind": "control",
+      "platform": "linux-x64",
+      "version": "0.3.4",
+      "url": "https://vpn.hngs.pub/downloads/edge-vpn-control-linux-x64-0.3.4.zip",
+      "sha256": "9e0fce7bc0aebf382a72181e60c54f657a1222986908fb9325ec9acee1944df5",
+      "size": 52068211,
+      "runtime": "self-contained"
+    },
+    {
+      "name": "edge-vpn-punch-linux-x64-0.3.0.zip",
+      "kind": "punch",
+      "platform": "linux-x64",
+      "version": "0.3.0",
+      "url": "https://vpn.hngs.pub/downloads/edge-vpn-punch-linux-x64-0.3.0.zip",
+      "sha256": "15c30fc2967a385bc8bbaac4f83d4e8e2935ab28d379128fe360100df166527a",
+      "size": 48492031,
+      "runtime": "self-contained"
+    },
+    {
+      "name": "edge-vpn-relay-linux-x64-0.3.0.zip",
+      "kind": "relay",
+      "platform": "linux-x64",
+      "version": "0.3.0",
+      "url": "https://vpn.hngs.pub/downloads/edge-vpn-relay-linux-x64-0.3.0.zip",
+      "sha256": "25c748d53c6cab18cdbdcc33b6298f351c526e6f816f278c9fdd4acf3faafcd3",
+      "size": 48492031,
+      "runtime": "self-contained"
+    }
+  ]
+}

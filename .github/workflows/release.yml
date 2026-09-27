@@ -1,0 +1,60 @@
+name: Publish verified release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release manifest version (for example 0.3.4, without v)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          global-json-file: global.json
+      - name: Test release validation
+        run: python -m unittest discover -s tests/Release -v
+      - name: Build source
+        run: dotnet build EdgeVpn.sln -c Release
+      - name: Integration tests
+        run: dotnet run --project tests/Integration -c Release --no-build
+
+  publish:
+    needs: validate
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: Download and verify prebuilt packages; archive source
+        env:
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: python tools/github-release.py prepare --version "$RELEASE_VERSION" --output artifacts/github-release
+      - name: Upload, verify remote digests, then publish draft
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python tools/github-release.py publish --output artifacts/github-release
