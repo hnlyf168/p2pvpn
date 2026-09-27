@@ -79,6 +79,7 @@ class ReleaseValidation(unittest.TestCase):
         with zipfile.ZipFile(self.path) as z:
             self.assertEqual(z.read("P2PVpnClient.exe"), b"program")
             self.assertIn("Wintun-LICENSE.txt", z.namelist())
+            self.assertEqual(z.getinfo("Wintun-LICENSE.txt").create_system, 3)
 
     def test_modified_prepared_asset_is_rejected(self):
         root = self.path.parent

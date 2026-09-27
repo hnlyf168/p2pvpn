@@ -128,6 +128,7 @@ def add_windows_license(path):
     with zipfile.ZipFile(path, "a", compression=zipfile.ZIP_DEFLATED, compresslevel=9) as archive:
         if "Wintun-LICENSE.txt" not in archive.namelist():
             entry = zipfile.ZipInfo("Wintun-LICENSE.txt", (2020, 1, 1, 0, 0, 0))
+            entry.create_system = 3  # Canonical Unix ZIP metadata, including on Windows.
             entry.compress_type = zipfile.ZIP_STORED
             entry.external_attr = 0o100644 << 16
             archive.writestr(entry, (ROOT / "docs/third-party/Wintun-LICENSE.txt").read_bytes().replace(b"\r\n", b"\n"))
