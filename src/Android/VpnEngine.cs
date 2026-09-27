@@ -111,7 +111,7 @@ internal sealed class VpnEngine(VpnTunnelService service)
             DirectCandidateFilter = (peer, candidate) => IsCandidateAllowed(profile.Routes, peer, candidate.Address),
             ClientVersion = "1.1.0", ClientPlatform = "android"
         });
-        node.Connected += () => VpnRuntimeState.Publish(new(true, true, "已连接", node.VirtualAddress?.ToString() ?? "--", node.Peers.Count, profile.RelayUrls.Length > 0 ? "直连优先 · 独立中继备用" : "直连模式 · 无中继权限"));
+        node.Connected += () => VpnRuntimeState.Publish(new(true, true, "已连接", node.VirtualAddress?.ToString() ?? "--", node.Peers.Count, profile.RelayUrls.Length > 0 ? "直连优先 · 独立中继备用" : "直连模式 · 当前未分配中继"));
         node.Reconnecting += ex => VpnRuntimeState.Publish(new(true, false, "协调服务器重连中", node.VirtualAddress?.ToString() ?? "--", node.Peers.Count, ex?.Message ?? "网络已变化"));
         node.TraversalStateChanged += value =>
         {
@@ -135,7 +135,7 @@ internal sealed class VpnEngine(VpnTunnelService service)
         tunnel.InboundFilter = (packet, peerId) => ingress.Allows(packet, peerId,
             node.Peers.FirstOrDefault(p => p.NumericPeerId == peerId)?.VirtualAddress, virtualIp, inboundPolicy);
         tunnel.LocalIpv4Address = virtualIp; tunnel.RespondToIpv4EchoRequests = true; tunnel.PacketTranslator = ingress; tunnel.Start(cancellationToken);
-        VpnRuntimeState.Publish(new(true, true, "已连接", $"{virtualIp}/{prefix}", node.Peers.Count, profile.RelayUrls.Length > 0 ? "直连优先 · 独立中继备用" : "直连模式 · 无中继权限"));
+        VpnRuntimeState.Publish(new(true, true, "已连接", $"{virtualIp}/{prefix}", node.Peers.Count, profile.RelayUrls.Length > 0 ? "直连优先 · 独立中继备用" : "直连模式 · 当前未分配中继"));
         service.UpdateNotification($"已连接 · {virtualIp}/{prefix}");
         using var timer = new PeriodicTimer(TimeSpan.FromMilliseconds(500)); int ticks = 0; int activeSubnetRoutes = 0;
         while (await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))

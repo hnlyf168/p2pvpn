@@ -16,8 +16,8 @@ subprocess.run([str(sdk / "zipalign"), "-P", "16", "-f", "4", str(candidates[0])
 temp = Path(os.environ["RUNNER_TEMP"])
 subprocess.run([str(sdk / "apksigner"), "sign", "--ks", str(temp / "android-release.p12"),
     "--ks-type", "PKCS12", "--ks-key-alias", os.environ["ANDROID_KEY_ALIAS"],
-    "--ks-pass", "file:" + str(temp / "android-key-password"),
-    "--key-pass", "file:" + str(temp / "android-key-password"),
+    "--ks-pass", "env:ANDROID_KEYSTORE_PASSWORD",
+    "--key-pass", "env:ANDROID_KEYSTORE_PASSWORD",
     "--out", str(signed), str(aligned)], check=True)
 subprocess.run([str(sdk / "zipalign"), "-c", "-P", "16", "4", str(signed)], check=True)
 print("Signed APK:", signed.name)

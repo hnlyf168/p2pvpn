@@ -109,7 +109,7 @@ public sealed class MainActivity : Activity
             var p = ProfileStore.Load(this);
             _identity.Text = p.DeviceId.Length == 0 ? "尚未加入网络" :
                 $"平台 {p.ControlUrl}\n网段 {p.Subnet}\n设备 {p.DeviceId}\n" +
-                (p.AccessRevoked ? "设备已停用，请重新添加" : p.RelayUrls.Length > 0 ? "直连优先 · 独立中继备用" : "普通会员 · 认证与打洞");
+                (p.AccessRevoked ? "设备已停用，请重新添加" : p.RelayUrls.Length > 0 ? "直连优先 · 独立中继备用" : "认证与打洞 · 当前未分配中继");
             _routes.Clear(); _routes.AddRange(p.Routes); RenderRoutes();
         } catch { _identity.Text = "无法读取本机配置，请移除本机配置后重新添加设备。"; }
         RenderState(VpnRuntimeState.Current);
@@ -210,7 +210,7 @@ public sealed class MainActivity : Activity
     private void EditRoute(SubnetRoute? route, int index)
     {
         var form = Stack(Orientation.Vertical, 8); form.SetPadding(Dp(20), Dp(4), Dp(20), 0);
-        var enabled = new CheckBox(this) { Text = "启用此映射", Checked = route?.Enabled ?? true }; enabled.SetTextColor(Color.DarkGray); form.AddView(enabled);
+        var enabled = new CheckBox(this) { Text = "启用此映射", Checked = route?.Enabled ?? true }; enabled.SetTextColor(Color.ParseColor("#86A5BA")); form.AddView(enabled);
         EditText subnet = DialogField(form, "手机访问网段，例如 192.168.2.0/24", route?.Subnet);
         EditText destination = DialogField(form, "远端真实网段，例如 192.168.1.0/24", route?.DestinationSubnet);
         EditText gateway = DialogField(form, "从哪个 VPN 地址出去，例如 10.77.0.6", route?.GatewayVirtualIp);
