@@ -2,7 +2,7 @@
 
 一个独立的虚拟组网项目，包含公众网站、用户控制台、Windows/Linux 客户端、备用打洞节点和独立中继。
 
-**[体验网站](https://vpn.hngs.pub) · [使用指南](https://vpn.hngs.pub/guide) · [公众号图文稿](docs/wechat/公众号文章.md)**
+**[体验网站](https://vpn.hngs.pub) · [安装包与源码下载](https://github.com/hnlyf168/p2pvpn/releases) · [使用指南](https://vpn.hngs.pub/guide) · [公众号图文稿](docs/wechat/公众号文章.md)**
 
 ![P2P VPN](docs/wechat/images/01-cover.png)
 
@@ -42,6 +42,8 @@ Linux 在线安装脚本使用 POSIX `sh`，不依赖 Python、jq 或预装 .NET
 | Linux x86 32 位 / ARMv6 / Android | 当前独立项目未提供可用发布包 |
 
 Linux 发布检查要求 ELF 没有 `PT_INTERP` 和 `DT_NEEDED`，不能用带运行时的自包含包冒充静态 AOT。组件版本独立记录；当前官网部署版本不等于每个下载包都使用同一版本号。
+
+GitHub Releases 同时提供已验证的安装包、源码 ZIP、组件版本清单和 SHA-256 校验文件。后续可在 Actions 中运行 **Publish verified release**，按版本清单发布已有成品；详细步骤见 [Release 发布说明](docs/github-releases.md)。该流程包含源码构建和集成测试，各架构 NativeAOT 成品仍由原生构建机生成。
 
 ## 项目结构
 
