@@ -34,6 +34,8 @@ jobs:
         run: python -m unittest discover -s tests/Release -v
       - name: Build source
         run: dotnet build EdgeVpn.sln -c Release
+      - name: Traffic statistics tests
+        run: dotnet run --project tests/Traffic -c Release
       - name: Integration tests
         run: dotnet run --project tests/Integration -c Release
 

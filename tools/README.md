@@ -1,5 +1,7 @@
 # 开发与验证工具
 
+- import-traffic-history.py：首次启用统计时，离线导入旧 Nginx JSON 日志，仅保留按天汇总，拒绝覆盖现有统计。
+- traffic-browser-check.cjs：使用隔离测试数据验证运营统计界面、日期筛选和手机适配。
 - dev.ps1 / stop-dev.ps1：Windows 本地开发进程；验证码仅在 Development 环境写入本地邮件目录。
 - build-native-clients.sh：已验证的 Linux 静态 musl NativeAOT 构建流程，需要自行准备对应 Docker 工具链镜像。默认客户端版本 0.3.3；不是自动安装编译环境的脚本。
 - pack-native-source.py / package-native-clients.py / verify-native-elf.py：源码打包、远程构建产物整理和静态 ELF 检查。

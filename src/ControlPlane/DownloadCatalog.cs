@@ -8,9 +8,9 @@ public sealed class DownloadCatalog
 {
     private readonly string directory;
     public DownloadItem[] Items { get; }
-    public DownloadCatalog(IWebHostEnvironment environment)
+    public DownloadCatalog(IWebHostEnvironment environment, IConfiguration configuration)
     {
-        directory = Path.Combine(environment.ContentRootPath, "downloads");
+        directory = Path.GetFullPath(configuration["DownloadDirectory"] ?? Path.Combine(environment.ContentRootPath, "downloads"));
         Items = Directory.Exists(directory) ? Directory.GetFiles(directory, "edge-vpn-*.zip")
             .Select(Read).Where(x => x is not null).Cast<DownloadItem>()
             .GroupBy(x => (x.Kind, x.Platform)).Select(g => g.OrderByDescending(x => System.Version.Parse(x.Version)).First())

@@ -11,6 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = 16384);
 builder.Services.AddSingleton<StateStore>();
 builder.Services.AddSingleton<DownloadCatalog>();
+builder.Services.AddSingleton<TrafficStatistics>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<TrafficStatistics>());
 builder.Services.AddSingleton<PlatformMail>();
 builder.Services.Configure<ForwardedHeadersOptions>(o =>
 {
@@ -81,6 +83,27 @@ if (!string.IsNullOrEmpty(bootstrapEmail) && !string.IsNullOrEmpty(bootstrapPass
 }
 
 app.UseForwardedHeaders();
+var traffic = app.Services.GetRequiredService<TrafficStatistics>();
+var downloadPaths = catalog.Items.Select(i => i.Url).ToHashSet(StringComparer.Ordinal);
+app.Use(async (ctx, next) =>
+{
+    var path = ctx.Request.Path.Value ?? "/";
+    if (path.Length > 1) path = path.TrimEnd('/');
+    var knownDownload = downloadPaths.Contains(path);
+    if (TrafficStatistics.Classify(ctx.Request.Method, path, 200, "text/html", "", knownDownload) is not null)
+    {
+        var requestedAt = DateTimeOffset.UtcNow;
+        var range = ctx.Request.Headers.Range.ToString();
+        ctx.Response.OnCompleted(() =>
+        {
+            var kind = TrafficStatistics.Classify(ctx.Request.Method, path, ctx.Response.StatusCode,
+                ctx.Response.ContentType, range, knownDownload);
+            if (kind is not null && !ctx.RequestAborted.IsCancellationRequested) traffic.Record(kind, path, requestedAt);
+            return Task.CompletedTask;
+        });
+    }
+    await next();
+});
 app.Use(async (ctx, next) =>
 {
     ctx.Response.Headers["X-Content-Type-Options"] = "nosniff";
@@ -417,6 +440,7 @@ app.MapPut("/admin/accounts/{id}/plan", async (HttpContext ctx, string id, PlanR
     await mail.Notify("会员变更 · P2P VPN", changed.Email + " 的会员已设置为 " + changed.Plan + "，到期：" + changed.PlanExpiresAt, true);
     return result;
 });
+app.MapGet("/admin/traffic", (HttpContext ctx, int? days) => { Admin(ctx); return traffic.Report(days ?? 30, DateTimeOffset.UtcNow); });
 app.MapGet("/admin/audit", (HttpContext ctx) => { Admin(ctx); return store.Read(db => db.Audit.TakeLast(200).Reverse().ToArray()); });
 app.MapGet("/admin/status", (HttpContext ctx) => { Admin(ctx); return app.Services.GetRequiredService<CoordinatorFleet>().Status; });
 

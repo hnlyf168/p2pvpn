@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -15,6 +15,11 @@ using Qcxt.Net.Quic.Security;
 var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../"));
 var run = Path.Combine(root, "artifacts", "tests", Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(run);
+var testDownloads = Path.Combine(run, "downloads");
+Directory.CreateDirectory(testDownloads);
+const string testPackage = "edge-vpn-client-linux-x64-0.0.1.zip";
+using (var zip = System.IO.Compression.ZipFile.Open(Path.Combine(testDownloads, testPackage), System.IO.Compression.ZipArchiveMode.Create))
+using (var writer = new StreamWriter(zip.CreateEntry("test.txt").Open())) writer.Write("isolated integration fixture");
 var children = new List<Process>();
 var admin = Secrets.Token(); var punch = Secrets.Token(); var relay = Secrets.Token();
 int webPort = FreePort(), relayPort = FreePort(), vpnPort = FreePort(), punchPort = FreePort();
@@ -28,7 +33,7 @@ try
     {
         ["ASPNETCORE_ENVIRONMENT"] = "Development", ["Mail__PickupDirectory"] = Path.Combine(run, "mail"),
         ["ASPNETCORE_URLS"] = controlUrl, ["PublicUrl"] = controlUrl, ["DataDirectory"] = Path.Combine(run, "data"),
-        ["AdminKey"] = admin, ["PunchNodeKey"] = punch, ["RelayNodeKey"] = relay,
+        ["DownloadDirectory"] = testDownloads, ["AdminKey"] = admin, ["PunchNodeKey"] = punch, ["RelayNodeKey"] = relay,
         ["Coordinator__ListenAddress"] = "127.0.0.1", ["Coordinator__FirstPort"] = vpnPort.ToString(), ["Coordinator__Capacity"] = "1",
         ["Coordinator__Hosts__0"] = "127.0.0.1", ["RelayUrls__0"] = relayUrl,
         ["Logging__LogLevel__Default"] = "Warning"
@@ -47,10 +52,33 @@ try
     await Until(async () => { try { return (await http.GetAsync("/health", ct)).IsSuccessStatusCode; } catch { return false; } });
     using var nodeHttp = new HttpClient();
     await Until(async () => { try { return (await nodeHttp.GetAsync($"http://127.0.0.1:{relayPort}/health", ct)).IsSuccessStatusCode; } catch { return false; } });
+    await Expect("/admin/traffic", null, null, 401, "GET");
+    await http.GetStringAsync("/", ct);
+    await http.GetStringAsync("/downloads?ticket=must-not-be-stored", ct);
+    await http.GetStringAsync("/site.css", ct);
+    await http.GetStringAsync("/install.sh", ct);
+    using (var full = await http.GetAsync("/downloads/" + testPackage, ct)) full.EnsureSuccessStatusCode();
+    foreach (var range in new[] { "bytes=0-3", "bytes=4-7" })
+    {
+        using var req = new HttpRequestMessage(HttpMethod.Get, "/downloads/" + testPackage);
+        req.Headers.Range = RangeHeaderValue.Parse(range);
+        using var response = await http.SendAsync(req, ct);
+        Check(response.StatusCode == HttpStatusCode.PartialContent, "real package range response");
+    }
+    using (var head = new HttpRequestMessage(HttpMethod.Head, "/downloads/" + testPackage))
+    using (var response = await http.SendAsync(head, ct)) { }
+    using (var missing = await http.GetAsync("/downloads/missing.zip", ct)) Check(missing.StatusCode == HttpStatusCode.NotFound, "missing package response");
+    await Until(async () => (await Admin("/admin/traffic?days=7", null, "GET")).GetProperty("today").GetProperty("downloads").GetInt64() == 2);
+    var trafficReport = await Admin("/admin/traffic?days=7", null, "GET");
+    Check(trafficReport.GetProperty("today").GetProperty("pageViews").GetInt64() == 2 &&
+        trafficReport.GetProperty("today").GetProperty("scriptRequests").GetInt64() == 1,
+        "real HTTP traffic excludes API/static/HEAD/failures and separates installer requests");
+    Check(!trafficReport.GetRawText().Contains("must-not-be-stored"), "traffic report excludes query secrets");
     var owner = await Call("/api/register", new { email = "owner@example.com", password = "Owner-test-password-2026" });
     string ownerToken = owner.GetProperty("token").GetString()!, ownerId = owner.GetProperty("account").GetProperty("id").GetString()!;
     var other = await Call("/api/register", new { email = "other@example.com", password = "Other-test-password-2026" });
     string otherToken = other.GetProperty("token").GetString()!;
+    await Expect("/admin/traffic", null, ownerToken, 401, "GET");
     var network = await Call("/api/networks", new { name = "Regression network", subnet = "10.89.16.0/28" }, ownerToken);
     string id = network.GetProperty("id").GetString()!, group = network.GetProperty("groups")[0].GetProperty("id").GetString()!;
     await Expect("/api/networks/" + id + "/groups", new { name = "intrusion" }, otherToken, 404);

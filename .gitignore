@@ -22,3 +22,5 @@ __pycache__/
 *.key
 *.pem
 src/ControlPlane/downloads/
+
+**/traffic-statistics.json
