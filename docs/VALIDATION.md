@@ -72,3 +72,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/publish.ps1
 - 管理员邮件配置页桌面/390px 手机布局通过，浏览器无脚本异常。截图见 artifacts/browser/1790489737441。
 
 新增检查：node tools/security-check-v03.cjs。源码发布脚本除 .NET 10 SDK / PowerShell 外需要 Python 3；已发布自包含二进制无需 .NET SDK。
+
+## Android 1.1.0 / 控制服务 0.3.6
+
+2026-09-27 的安卓移植验证单独在 GitHub Actions 完成，未在本机、模拟器或手机运行客户端。上文 Windows 记录属于此前的桌面与服务端版本。
+
+- [构建与发布记录](https://github.com/hnlyf168/p2pvpn/actions/runs/36310968497)，构建提交 4b80fb103044285e8c327cffa7a4886ba54837dc。
+- Android Release APK 编译成功，包含 armeabi-v7a、arm64-v8a、x86_64；包名 pub.hngs.vpn，versionCode 14，最低 API 26。
+- SDK apksigner 正式签名及证书指纹检查通过；zipalign 16 KB 对齐检查通过；不是调试签名。
+- 签名证书 SHA-256：3fb59a8442bd9263812eb9854d145c4f6b3f268b6caf0a02773073387379165c。
+- APK SHA-256：15ea5274d0abd9100a794fafc6a5d3e87ed059b0baea4af4028c364ba6272c46。
+- CI 服务端回归覆盖：安卓专属链接和二维码、设备系统不匹配拒绝、同设备重试、跨设备复用拒绝、撤销后拒绝，以及 APK MIME、目录白名单和历史下载。
+- 原有统计、租户隔离、分组隔离、直连、独立中继、会员过期、设备撤销与密钥轮换等回归通过。
+- [预发布附件](https://github.com/hnlyf168/p2pvpn/releases/tag/android-v1.1.0)包括 APK、源码 ZIP、SHA256SUMS 和构建验证说明。
+
+尚未验证安卓系统授权交互、真机 TUN 数据收发、扫码摄像头、蜂窝/Wi-Fi 切换和长时间后台运行。CI 协议测试不能代替这些真机验证。
